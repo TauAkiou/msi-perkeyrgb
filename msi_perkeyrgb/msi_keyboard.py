@@ -110,9 +110,14 @@ class MSI_Keyboard:
         if effect_map is not None:
             for effect, effect_objects in effect_map.items():
                 effect_packet = make_effect_packet(effect_objects)
+                # for i in effect_packet:
+                #   print(i)
+
+                #f = open("dump_effect.dmp", 'a+b')
+                #f.write(bytearray(effect_packet))
                 self._hid_keyboard.send_feature_report(effect_packet)
 
-        # Sending color commands by region
+        # Set43nding color commands by region
         for region, region_colors_map in maps_sorted_by_region.items():
             key_colors_packet = make_key_colors_packet(region, region_colors_map, effect_map)
             self._hid_keyboard.send_feature_report(key_colors_packet)

@@ -1,7 +1,7 @@
 import re
 import sys
 
-PRESET_COLORS = {"off": [0x00, 0x00, 0x00]}
+PRESET_COLORS = {"off": (0x00, 0x00, 0x00), "red": (0xFF, 0x00, 0x00), "blue": (0x00, 0x00, 0xFF)}
 ALIAS_ALL = "all"
 ALIASES = {ALIAS_ALL: "9-133,fn",
            "f_row": "67-76,95,96",
@@ -168,7 +168,7 @@ def parse_config(f, msi_keymap):
                     continue
             elif parameters[0] == "start":
                 if len(parameters) != 2:
-                    raise ConfigParseError("line %d: Effect start statement invalid (requires 2 parameters, got %d)" % i+1, len(parameters))
+                    raise ConfigParseError("line %d: Effect start statement invalid (requires 2 parameters, got %d)" % (i+1, len(parameters)))
                 try:
                     startcolor = parse_color(parameters[1])
                 except LineParseError as e:
@@ -196,7 +196,8 @@ def parse_config(f, msi_keymap):
                     elif rad_control == "x":
                         effect_map[selected_event_name].wave_rad_control = "x"
                     else:
-                        raise ConfigParseError("line %d: Parameter 'axis' is not valid. (expected: \"x\", \"y\", \"xy\", got %s" % i+1, parameters[3].lower)
+                        raise ConfigParseError("line %d: Parameter 'axis' is not valid. (expected: \"x\", \"y\", \"xy\", got %s"
+                                               % (i+1, parameters[3].lower))
 
                     wavelength = verify_percentage(int(parameters[4]))
                     effect_map[selected_event_name].wave_wavelength = wavelength
@@ -208,7 +209,7 @@ def parse_config(f, msi_keymap):
                         effect_map[selected_event_name].wave_direction = direction
                     else:
                         raise ConfigParseError("line %d: parameter \"direction\" is not valid."
-                                               " (expected: \"in\", \"out\", got %s)" % i+1, direction)
+                                               " (expected: \"in\", \"out\", got %s)" % (i+1, direction))
                 except LineParseError as e:
                     raise ConfigParseError("line %d: %s" % (i + 1, str(e))) from e
                 continue
@@ -218,7 +219,7 @@ def parse_config(f, msi_keymap):
                 selected_event_name = ""
                 continue
             else:
-                raise ConfigParseError("line %d: Invalid statement in Effect block (found %s}" % i+1, line)
+                raise ConfigParseError("line %d: Invalid statement in Effect block (found %s}" % (i+1, line))
 
         if i == 0 and parameters[0] == "model":
             warnings += ["Passing the laptop model in the configuration file is deprecated, use the --model option instead."]
@@ -226,7 +227,8 @@ def parse_config(f, msi_keymap):
 
         if parameters[0] == "effect":
             if len(parameters) != 2:
-                raise ConfigParseError("line %d: Effect declaration invalid. (expected 2 parameters, got %d)" % (i+1, len(parameters)))
+                raise ConfigParseError("line %d: Effect declaration invalid. (expected 2 parameters, got %d)"
+                                       % (i+1, len(parameters)))
                 pass
             selected_event_name = parameters[1]
             effect_map[selected_event_name] = MsiEffect(len(effect_map))
@@ -241,8 +243,8 @@ def parse_config(f, msi_keymap):
         if len(parameters) == 0:
             continue
         elif len(parameters) < 3 | len(parameters) > 4:
-            raise ConfigParseError("line %d : Invalid number of parameters (expected 3 or 4) got %d)" %
-                                   (i+1, len(parameters)))
+            raise ConfigParseError("line %d : Invalid number of parameters (expected 3 or 4) got %d)"
+                                   % (i+1, len(parameters)))
             pass
         else:
 
@@ -283,6 +285,8 @@ def parse_config(f, msi_keymap):
 
     if in_event_block == 1:
         raise ConfigParseError("<EOF>: An effect block was not closed properly.")
+
+    verify_effect(effect_map)
 
     return colors_map, effect_map, warnings
 
@@ -387,16 +391,19 @@ def effect_add_transition(effect_map, name, color, duration):
 
 
 def verify_effect(effect_map):
-    # Currently, only check if the period is larger then FF.
     # TODO: Determine what else and how else effects can be verified.
 
     for key in effect_map:
+        if len(effect_map[key].transition_list) <= 0:
+            raise ConfigParseError("An effect cannot have 0 transitions.")
+
         period = 0
         for trans in effect_map[key].transition_list:
             period += trans.duration
             if period > 0xFFFF:
                 raise ConfigParseError("Total transition duration is too long. (length: %d ms)" % period)
         effect_map[key].period = period
+
 
     return effect_map
 

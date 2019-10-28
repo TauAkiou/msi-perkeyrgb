@@ -26,6 +26,8 @@ Transition Block (0x02 - 0x81)
 -------------------------------
 All transition blocks are 8 bytes in length. The transition table has room for 16 transitions.
 
+*DANGER: Do NOT push an effects block that has no transitions to your keyboard! It will push the keyboard into a broken state where the backlight will shut off and will not respond to commands, even under windows! I CANNOT BE HELD RESPONSIBLE IF YOU BREAK YOUR KEYBOARD THIS WAY!*
+
 
 [<Effect Id>] [0x00] [<RGB Deltas>] [0x00] [Transition Duration] ([Transition #]  [0x00] [<RGB Deltas>] [0x00] [Transition Duration]) ...
   <1 byte>             <3 bytes>		  <2 bytes, Little Endian>   <1 byte>
