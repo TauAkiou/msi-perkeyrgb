@@ -71,7 +71,8 @@ def make_effect_packet(effect_entry):
 
         # The packet does not utilize colors directly, but instead uses the difference in colors
         # to calculate how many 'stages' the lighting should dim.
-        color_delta = calculate_color_delta(current_color, transition.color)
+        # Also uses the duration to calculate how fast should the color dim
+        color_delta = calculate_color_delta(current_color, transition.color, transition.duration)
         packet += color_delta
 
         packet += [0x00]
@@ -127,10 +128,14 @@ def make_effect_packet(effect_entry):
     return packet
 
 
-def calculate_color_delta(start, target):
-    delta_red = math.floor((target[0] - start[0]) / 16)
-    delta_green = math.floor((target[1] - start[1]) / 16)
-    delta_blue = math.floor((target[2] - start[2]) / 16)
+def calculate_color_delta(start, target, duration):
+    # the lowest value it can go is 32 milliseconds or then the keyboard stays solid
+    if duration <= 32:
+        duration = 32
+    divisible = math.floor(duration / 16)
+    delta_red = math.floor((target[0] - start[0]) / divisible)
+    delta_green = math.floor((target[1] - start[1]) / divisible)
+    delta_blue = math.floor((target[2] - start[2]) / divisible)
 
     if delta_red < 0:
         delta_red = 256 + delta_red
