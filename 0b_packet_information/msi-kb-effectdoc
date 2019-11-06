@@ -62,7 +62,16 @@ All transition blocks are 8 bytes in length. The transition table has room for 1
 			Red: 8 -> 8
 			Green 8 -> 2
 			Blue 8 -> 10
-			
+
+			In order to make the transitions smoother, the delta value is also divided by the transition length. (Thanks to ErrorErrorError for finding this)
+
+			Delta calculations:
+
+            duration_denominator = math.floor(transition_length / 16)
+
+            delta_<color> = math.floor((target_color - source_color) / duration_denominator)
+            (repeated for each color)
+
 	<Transition Duration>
 		Determines how long this stage will take (in miliseconds) to transition to its new color.
 		
